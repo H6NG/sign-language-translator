@@ -5,8 +5,40 @@ import './App.css'
 const TITLE_TEXT = 'SignMate'
 const TYPING_SPEED = 60
 
+const FAQ_ITEMS = [
+    {
+        question: 'What is SignMate and how does it work?',
+        answer: 'SignMate uses your webcam and AI-powered computer vision to detect hand signs in real-time. It tracks 21 landmarks per hand using MediaPipe technology and translates American Sign Language (ASL) gestures into text instantly.'
+    },
+    {
+        question: 'Do I need to install anything?',
+        answer: 'SignMate runs in your browser — no plugins or extensions needed. You just need a webcam and a modern browser (Chrome, Firefox, or Edge). The backend server handles all the AI processing locally on your machine.'
+    },
+    {
+        question: 'Is my camera data private?',
+        answer: 'Absolutely. All video processing happens locally on your device. Your camera feed is never uploaded to any server or stored anywhere. We take privacy seriously — see our Privacy Policy for full details.'
+    },
+    {
+        question: 'How accurate is the translation?',
+        answer: 'SignMate achieves high accuracy for static ASL fingerspelling (A-Z letters and 0-9 numbers). The AI model is constantly being improved. You can see real-time confidence scores for each prediction as you sign.'
+    },
+    {
+        question: 'Can I use SignMate to learn sign language?',
+        answer: 'Yes! SignMate includes a Practice mode where you can learn individual signs, a Quiz mode to test your knowledge, and a comprehensive Guide with visual references for each letter and number.'
+    },
+    {
+        question: 'Is SignMate free to use?',
+        answer: 'SignMate is completely free and open-source. You can use all features — real-time translation, video transcription, practice tools, and quizzes — without any cost or account required.'
+    }
+]
+
 function HomePage({ onSettingsOpen }) {
     const navigate = useNavigate()
+    const [openFaq, setOpenFaq] = useState(null)
+
+    const toggleFaq = (index) => {
+        setOpenFaq(openFaq === index ? null : index)
+    }
 
     const [displayedTitle, setDisplayedTitle] = useState(() =>
         typeof sessionStorage !== 'undefined' && sessionStorage.getItem('slt_typing_seen') ? TITLE_TEXT : ''
@@ -199,6 +231,44 @@ function HomePage({ onSettingsOpen }) {
                     <span className="trust-item">Flask</span>
                     <span className="trust-divider">·</span>
                     <span className="trust-item">OpenCV</span>
+                </div>
+            </section>
+
+            {/* FAQ Section */}
+            <section className="faq-section">
+                <h2 className="faq-title">Frequently Asked Questions</h2>
+                <p className="faq-subtitle">Have a question? We have answers.</p>
+                <div className="faq-list">
+                    {FAQ_ITEMS.map((item, index) => (
+                        <div
+                            key={index}
+                            className={`faq-item ${openFaq === index ? 'faq-item-open' : ''}`}
+                        >
+                            <button
+                                className="faq-question"
+                                onClick={() => toggleFaq(index)}
+                                aria-expanded={openFaq === index}
+                            >
+                                <span>{item.question}</span>
+                                <svg
+                                    className={`faq-chevron ${openFaq === index ? 'faq-chevron-open' : ''}`}
+                                    width="20"
+                                    height="20"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                >
+                                    <polyline points="6 9 12 15 18 9" />
+                                </svg>
+                            </button>
+                            <div className={`faq-answer ${openFaq === index ? 'faq-answer-open' : ''}`}>
+                                <p>{item.answer}</p>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </section>
 

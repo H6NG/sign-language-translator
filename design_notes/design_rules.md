@@ -146,6 +146,30 @@ Transform the current frontend to match the design language seen across all comp
 
 ---
 
+## Rule 11 — Add an FAQ Section
+
+**What competitors do**: Both Shuttle and the dark SaaS use centered accordion-style FAQ sections with expandable questions. Common patterns:
+
+- Large bold title ("FAQ") centered above the accordion
+- Optional subtitle or badge above the title
+- Accordion items: question text + expand/collapse icon (`v` chevron or `+`/`−`)
+- Only one item expanded at a time
+- Narrow, centered container (~650px max-width)
+- Clean separation between items (subtle borders or gaps)
+
+**What to do**:
+
+- Add an **FAQ section** between the trust bar and the footer
+- Center a **large bold title** ("Frequently Asked Questions") matching our sans-serif display font
+- Use **white accordion cards** on the off-white homepage background (matching Shuttle's light pattern)
+- Each item: question on the left, **chevron or plus/minus icon** on the right
+- **Click to expand/collapse** — only one open at a time
+- Content: 5–6 questions relevant to SignMate (what it does, privacy, accuracy, requirements, etc.)
+- Generous internal card padding (20–24px), rounded corners (12–16px)
+- Keep the narrow centered layout (~700px max-width)
+
+---
+
 ## Implementation Order
 
 1. **Theme switch** (Rule 1) — landing page goes light/white
@@ -156,3 +180,4 @@ Transform the current frontend to match the design language seen across all comp
 6. **Feature cards** (Rule 9) — replace emojis, clean card design
 7. **Shapes** (Rule 7) — pill buttons, rounded cards
 8. **Trust bar** (Rule 10) — restyle tech section as horizontal strip
+9. **FAQ section** (Rule 11) — accordion FAQ between trust bar and footer
