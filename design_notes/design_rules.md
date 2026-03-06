@@ -170,6 +170,64 @@ Transform the current frontend to match the design language seen across all comp
 
 ---
 
+## Rule 12 — Redesign the "How It Works" Section
+
+**What competitors do**: Across 4 competitor "How it works" sections (fintech receipt tool, Framer Teams, GitBook ×2), several strong patterns repeat:
+
+- **Two-column split layout** — 3 of 4 competitors use left context + right content (or left steps + right product visual)
+- **Explicit step numbering** — bold numerals (01, 02, 03…) or colored icons to anchor each step
+- **Product visual as proof** — a real UI mockup alongside the steps, synced to the active step or used as a centerpiece
+- **Extreme whitespace** — 80–120px section padding, 40–60px between steps
+- **Single accent color on step markers only** — never on text or backgrounds
+- **Minimal containers** — spacing does the structural work; if a container exists, it's 1px border with near-transparent fill
+- **3-tier type hierarchy** — massive section headline → medium step titles → small descriptions
+
+**What to do**:
+
+### Layout
+
+- Replace the current **3-card grid** with a **two-column split layout**:
+  - **Left column (~35–40%)**: section title ("How It Works"), a 1–2 line subtitle describing the pipeline, and optionally a CTA button
+  - **Right column (~60–65%)**: the step list, stacked vertically
+- Alternative layout option: **numbered horizontal card row** (like GitBook's 01–05 pattern) — works if limiting to 4–5 steps
+
+### Step Content
+
+- Expand from **3 steps to 6 steps** covering the full pipeline (see `how_it_works_expanded_draft.md`):
+  1. Camera Capture
+  2. Hand Detection & Landmark Tracking
+  3. Feature Extraction & Normalization
+  4. AI Classification
+  5. Word & Sentence Building
+  6. Full-Word Recognition (Enhanced Mode)
+
+### Step Numbering & Icons
+
+- Add **explicit step numbers** (01, 02, 03…) in a bold, larger font — use the **emerald accent color** for numbers only
+- Pair each number with a **small monochrome SVG icon** (from Lucide or similar) inside a subtle rounded-square container with light fill
+- Icons should be **20–24px**, line-style, matching existing icon set
+
+### Typography within the Section
+
+- **Section headline**: 32–40px, bold, dark — same style as other section titles
+- **Optional subtitle**: 15–16px, regular, medium grey, 1–2 lines
+- **Step titles**: 18–22px, bold/semibold, dark
+- **Step descriptions**: 14–15px, regular, medium-dark grey, **2–3 lines max** — user-facing, non-technical language
+
+### Spacing & Containers
+
+- Section top/bottom padding: **100–120px**
+- Between steps: **40–60px** vertical gap (if vertical list)
+- If using cards: internal padding **24–32px**, **very subtle 1px border**, light off-white fill, **16–20px border-radius**
+- No heavy shadows or dark backgrounds — keep it consistent with the light homepage theme
+
+### Optional Enhancements
+
+- **Product visual strip**: add a narrow product screenshot or animated SVG diagram showing the pipeline (camera → landmarks → AI → text) between the steps and the trust bar
+- **Stats strip** below the steps: "21 landmarks tracked · <30ms latency · 36 signs recognized · 370k word dictionary" — small, muted, inline
+
+---
+
 ## Implementation Order
 
 1. **Theme switch** (Rule 1) — landing page goes light/white
@@ -180,4 +238,5 @@ Transform the current frontend to match the design language seen across all comp
 6. **Feature cards** (Rule 9) — replace emojis, clean card design
 7. **Shapes** (Rule 7) — pill buttons, rounded cards
 8. **Trust bar** (Rule 10) — restyle tech section as horizontal strip
-9. **FAQ section** (Rule 11) — accordion FAQ between trust bar and footer
+9. **How It Works redesign** (Rule 12) — expand to 6 steps with split layout and numbering
+10. **FAQ section** (Rule 11) — accordion FAQ between trust bar and footer

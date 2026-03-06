@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './App.css'
 
@@ -35,10 +35,34 @@ const FAQ_ITEMS = [
 function HomePage({ onSettingsOpen }) {
     const navigate = useNavigate()
     const [openFaq, setOpenFaq] = useState(null)
+    const stepsRef = useRef(null)
+    const lineRef = useRef(null)
 
     const toggleFaq = (index) => {
         setOpenFaq(openFaq === index ? null : index)
     }
+
+    // Scroll-driven line animation
+    useEffect(() => {
+        const handleScroll = () => {
+            if (!stepsRef.current || !lineRef.current) return
+            const container = stepsRef.current
+            const rect = container.getBoundingClientRect()
+            const windowH = window.innerHeight
+            // Start filling when the top of the steps enters the viewport center
+            // Finish when the bottom of the steps reaches the viewport center
+            const start = rect.top - windowH * 0.5
+            const end = rect.bottom - windowH * 0.5
+            const raw = Math.min(1, Math.max(0, -start / (end - start)))
+            // Gentle ease: blend linear with smoothstep for subtle accel/decel
+            const smoothstep = raw * raw * (3 - 2 * raw)
+            const eased = raw * 0.4 + smoothstep * 0.6
+            lineRef.current.style.setProperty('--hiw-progress', eased)
+        }
+        window.addEventListener('scroll', handleScroll, { passive: true })
+        handleScroll() // initial
+        return () => window.removeEventListener('scroll', handleScroll)
+    }, [])
 
     const [displayedTitle, setDisplayedTitle] = useState(() =>
         typeof sessionStorage !== 'undefined' && sessionStorage.getItem('slt_typing_seen') ? TITLE_TEXT : ''
@@ -115,7 +139,7 @@ function HomePage({ onSettingsOpen }) {
                             <span className="cta-arrow">→</span>
                         </button>
                         <button className="hero-cta-secondary" onClick={() => {
-                            document.querySelector('.features')?.scrollIntoView({ behavior: 'smooth' })
+                            document.querySelector('.hiw-section')?.scrollIntoView({ behavior: 'smooth' })
                         }}>
                             See How It Works
                         </button>
@@ -168,52 +192,112 @@ function HomePage({ onSettingsOpen }) {
                 </div>
             </section>
 
-            {/* Features Section */}
-            <section className="features">
-                <h2 className="features-title">How It Works</h2>
-                <div className="features-grid">
-                    <div className="feature-card">
-                        <div className="feature-card-accent"></div>
-                        <div className="feature-icon-wrap">
-                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M23 7l-7 5 7 5V7z" />
-                                <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
-                            </svg>
-                        </div>
-                        <h3>Real-Time Tracking</h3>
-                        <p>
-                            MediaPipe-powered hand detection tracks 21 landmarks per hand
-                            with sub-30ms latency.
+            {/* How It Works Section */}
+            <section className="hiw-section">
+                <div className="hiw-layout">
+                    <div className="hiw-context">
+                        <h2 className="hiw-title">How it works</h2>
+                        <p className="hiw-subtitle">
+                            Your signs, translated by AI and delivered in real time — powered by computer vision, ready in your browser.
                         </p>
+                        <button className="hiw-cta" onClick={() => navigate('/tracker')}>
+                            Start Translating
+                        </button>
                     </div>
-
-                    <div className="feature-card">
-                        <div className="feature-card-accent"></div>
-                        <div className="feature-icon-wrap">
-                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z" />
-                                <line x1="10" y1="22" x2="14" y2="22" />
-                            </svg>
+                    <div className="hiw-steps" ref={stepsRef}>
+                        <div className="hiw-line" ref={lineRef}>
+                            <div className="hiw-line-fill"></div>
                         </div>
-                        <h3>AI-Powered Recognition</h3>
-                        <p>
-                            Deep learning model trained on thousands of sign language gestures
-                            for accurate predictions.
-                        </p>
-                    </div>
-
-                    <div className="feature-card">
-                        <div className="feature-card-accent"></div>
-                        <div className="feature-icon-wrap">
-                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                            </svg>
+                        <div className="hiw-step">
+                            <div className="hiw-step-icon">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M23 7l-7 5 7 5V7z" />
+                                    <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                                </svg>
+                            </div>
+                            <div className="hiw-step-content">
+                                <h3 className="hiw-step-title">Camera capture</h3>
+                                <p className="hiw-step-desc">
+                                    Your webcam captures a live video feed at up to 60 fps. The image is mirrored so movements feel natural, like looking in a mirror.
+                                </p>
+                            </div>
                         </div>
-                        <h3>Sentence Building</h3>
-                        <p>
-                            Build words and sentences from detected signs with autocomplete
-                            and text-to-speech.
-                        </p>
+
+                        <div className="hiw-step">
+                            <div className="hiw-step-icon">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2" />
+                                    <path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2" />
+                                    <path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8" />
+                                    <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 13" />
+                                </svg>
+                            </div>
+                            <div className="hiw-step-content">
+                                <h3 className="hiw-step-title">Hand detection & tracking</h3>
+                                <p className="hiw-step-desc">
+                                    MediaPipe identifies your hands and maps 21 precise 3D landmarks — from wrist to every fingertip — tracking position, rotation, and depth in real time.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="hiw-step">
+                            <div className="hiw-step-icon">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                                    <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                                    <line x1="12" y1="22.08" x2="12" y2="12" />
+                                </svg>
+                            </div>
+                            <div className="hiw-step-content">
+                                <h3 className="hiw-step-title">Feature extraction</h3>
+                                <p className="hiw-step-desc">
+                                    The 3D coordinates of all 42 landmarks are extracted into a compact 126-feature vector and normalized so hand size and camera distance don't affect results.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="hiw-step">
+                            <div className="hiw-step-icon">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z" />
+                                    <line x1="10" y1="22" x2="14" y2="22" />
+                                </svg>
+                            </div>
+                            <div className="hiw-step-content">
+                                <h3 className="hiw-step-title">AI classification</h3>
+                                <p className="hiw-step-desc">
+                                    A deep neural network scores every possible sign (A–Z, 0–9) and returns the top 3 predictions with real-time confidence percentages.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="hiw-step">
+                            <div className="hiw-step-icon">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                                </svg>
+                            </div>
+                            <div className="hiw-step-content">
+                                <h3 className="hiw-step-title">Sentence building</h3>
+                                <p className="hiw-step-desc">
+                                    Individual letters are stitched into words with autocomplete from a 370k-word dictionary. Pause to add spaces, and hear your message read aloud with text-to-speech.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="hiw-step">
+                            <div className="hiw-step-icon">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                                </svg>
+                            </div>
+                            <div className="hiw-step-content">
+                                <h3 className="hiw-step-title">Full-word recognition</h3>
+                                <p className="hiw-step-desc">
+                                    Enhanced Mode uses an LSTM network that watches sequences of motion to recognize whole dynamic signs like "hello," "thank you," and "yes."
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
