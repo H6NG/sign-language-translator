@@ -7,7 +7,6 @@ const TYPING_SPEED = 60
 
 function HomePage({ onSettingsOpen }) {
     const navigate = useNavigate()
-    const API_URL = 'http://localhost:5001'
 
     const [displayedTitle, setDisplayedTitle] = useState(() =>
         typeof sessionStorage !== 'undefined' && sessionStorage.getItem('slt_typing_seen') ? TITLE_TEXT : ''
@@ -38,42 +37,31 @@ function HomePage({ onSettingsOpen }) {
         return () => clearInterval(interval)
     }, [])
 
-    const launchEnhancedMode = async () => {
-        try {
-            const response = await fetch(`${API_URL}/launch_enhanced`, {
-                method: 'POST',
-            });
-            const data = await response.json();
-            if (data.success) {
-                console.log("Launched enhanced mode");
-            } else {
-                console.error("Failed to launch", data.message);
-            }
-        } catch (err) {
-            console.error("Error launching enhanced mode", err);
-        }
-    }
-
     return (
         <div className="homepage">
-            {/* Header Bar */}
+            {/* Navigation */}
             <header className="home-header">
                 <div className="home-header-inner">
                     <button className="home-logo" onClick={() => navigate('/')}>
                         <img src="/signmate_logo.png" alt="SignMate Logo" className="logo-icon" />
                         SignMate
                     </button>
-                    <nav className="home-nav-links">
-                        <button onClick={() => navigate('/tracker')}>Tracker</button>
-                        <button onClick={() => navigate('/transcriber')}>Transcriber</button>
+                    <nav className="home-nav-pill">
+                        <button onClick={() => navigate('/tracker')}>Translator</button>
                         <button onClick={() => navigate('/guide')}>Guide</button>
-                        <button onClick={() => navigate('/history')}>History</button>
-                        <button onClick={() => navigate('/quiz')}>Quiz</button>
                         <button onClick={() => navigate('/practice')}>Practice</button>
                     </nav>
-                    <button className="home-settings-btn" onClick={onSettingsOpen}>
-                        ⚙️ Settings
-                    </button>
+                    <div className="home-header-right">
+                        <button className="home-settings-icon" onClick={onSettingsOpen} aria-label="Settings">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="3" />
+                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                            </svg>
+                        </button>
+                        <button className="home-cta-nav" onClick={() => navigate('/tracker')}>
+                            Get Started
+                        </button>
+                    </div>
                 </div>
             </header>
 
@@ -85,25 +73,65 @@ function HomePage({ onSettingsOpen }) {
                         {showCursor && <span className="hero-title-cursor">|</span>}
                     </h1>
                     <p className="hero-description">
-                        Transform hand gestures into meaningful data using advanced computer vision.
-                        Our real-time tracking system captures and processes sign language movements
-                        to help build better accessibility tools.
+                        Real-time sign language translation powered by AI and computer vision.
+                        Break communication barriers instantly.
                     </p>
 
-                    {/* Primary actions */}
-                    <div className="hero-cta-grid">
-                        <button className="hero-cta" onClick={() => navigate('/tracker')}>
-                            Real-Time Translator
+                    <div className="hero-cta-row">
+                        <button className="hero-cta-primary" onClick={() => navigate('/tracker')}>
+                            Start Translating
                             <span className="cta-arrow">→</span>
                         </button>
-                        <button className="hero-cta hero-cta-outline" onClick={() => navigate('/transcriber')}>
-                            Video Transcriber
-                            <span className="cta-arrow">→</span>
+                        <button className="hero-cta-secondary" onClick={() => {
+                            document.querySelector('.features')?.scrollIntoView({ behavior: 'smooth' })
+                        }}>
+                            See How It Works
                         </button>
-                        <button className="hero-cta hero-cta-outline" onClick={() => navigate('/enhanced')}>
-                            Enhanced Mode
-                            <span className="cta-arrow">→</span>
-                        </button>
+                    </div>
+                </div>
+            </section>
+
+            {/* Product Mockup */}
+            <section className="product-showcase">
+                <div className="product-mockup">
+                    <div className="mockup-window">
+                        <div className="mockup-toolbar">
+                            <span className="mockup-dot red"></span>
+                            <span className="mockup-dot yellow"></span>
+                            <span className="mockup-dot green"></span>
+                            <span className="mockup-title">SignMate — Real-Time Translator</span>
+                        </div>
+                        <div className="mockup-content">
+                            <div className="mockup-layout">
+                                <div className="mockup-video-area">
+                                    <div className="mockup-video-placeholder">
+                                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.4">
+                                            <path d="M23 7l-7 5 7 5V7z" />
+                                            <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                                        </svg>
+                                        <span>Live Camera Feed</span>
+                                    </div>
+                                    <div className="mockup-badges">
+                                        <span className="mockup-badge live">● LIVE</span>
+                                        <span className="mockup-badge tracking">TRACKING</span>
+                                    </div>
+                                </div>
+                                <div className="mockup-sidebar-area">
+                                    <div className="mockup-prediction">
+                                        <span className="mockup-pred-label">AI Prediction</span>
+                                        <span className="mockup-pred-letter">A</span>
+                                        <div className="mockup-pred-bar">
+                                            <div className="mockup-pred-fill" style={{ width: '94%' }}></div>
+                                        </div>
+                                        <span className="mockup-pred-conf">94%</span>
+                                    </div>
+                                    <div className="mockup-sentence">
+                                        <span className="mockup-sent-label">Sentence Builder</span>
+                                        <span className="mockup-sent-text">HELLO WORLD</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -113,67 +141,64 @@ function HomePage({ onSettingsOpen }) {
                 <h2 className="features-title">How It Works</h2>
                 <div className="features-grid">
                     <div className="feature-card">
-                        <div className="feature-icon">📹</div>
+                        <div className="feature-card-accent"></div>
+                        <div className="feature-icon-wrap">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M23 7l-7 5 7 5V7z" />
+                                <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                            </svg>
+                        </div>
                         <h3>Real-Time Tracking</h3>
                         <p>
                             MediaPipe-powered hand detection tracks 21 landmarks per hand
-                            with sub-30ms latency for smooth, responsive tracking.
+                            with sub-30ms latency.
                         </p>
                     </div>
 
                     <div className="feature-card">
-                        <div className="feature-icon">✋</div>
-                        <h3>Multi-Hand Support</h3>
+                        <div className="feature-card-accent"></div>
+                        <div className="feature-icon-wrap">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z" />
+                                <line x1="10" y1="22" x2="14" y2="22" />
+                            </svg>
+                        </div>
+                        <h3>AI-Powered Recognition</h3>
                         <p>
-                            Track up to 2 hands simultaneously, perfect for capturing
-                            complex two-handed gestures and sign language phrases.
+                            Deep learning model trained on thousands of sign language gestures
+                            for accurate predictions.
                         </p>
                     </div>
 
                     <div className="feature-card">
-                        <div className="feature-icon">💾</div>
-                        <h3>Data Collection</h3>
+                        <div className="feature-card-accent"></div>
+                        <div className="feature-icon-wrap">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                            </svg>
+                        </div>
+                        <h3>Sentence Building</h3>
                         <p>
-                            Buffer and save gesture sequences to CSV for machine learning
-                            training. Build your own sign language recognition models.
-                        </p>
-                    </div>
-
-                    <div className="feature-card">
-                        <div className="feature-icon">📊</div>
-                        <h3>Live Visualization</h3>
-                        <p>
-                            Monitor fingertip movements in real-time with dynamic graphs
-                            and visual feedback overlays on the video feed.
+                            Build words and sentences from detected signs with autocomplete
+                            and text-to-speech.
                         </p>
                     </div>
                 </div>
             </section>
 
-            {/* Tech Stack */}
-            <section className="tech-section">
-                <h2 className="tech-title">Built With</h2>
-                <div className="tech-grid">
-                    <div className="tech-item">
-                        <span className="tech-icon">🐍</span>
-                        <span className="tech-name">Python</span>
-                    </div>
-                    <div className="tech-item">
-                        <span className="tech-icon">🤖</span>
-                        <span className="tech-name">MediaPipe</span>
-                    </div>
-                    <div className="tech-item">
-                        <span className="tech-icon">⚛️</span>
-                        <span className="tech-name">React</span>
-                    </div>
-                    <div className="tech-item">
-                        <span className="tech-icon">🌐</span>
-                        <span className="tech-name">Flask</span>
-                    </div>
-                    <div className="tech-item">
-                        <span className="tech-icon">👁️</span>
-                        <span className="tech-name">OpenCV</span>
-                    </div>
+            {/* Trust / Built With Bar */}
+            <section className="trust-bar">
+                <span className="trust-label">Powered by</span>
+                <div className="trust-items">
+                    <span className="trust-item">Python</span>
+                    <span className="trust-divider">·</span>
+                    <span className="trust-item">MediaPipe</span>
+                    <span className="trust-divider">·</span>
+                    <span className="trust-item">React</span>
+                    <span className="trust-divider">·</span>
+                    <span className="trust-item">Flask</span>
+                    <span className="trust-divider">·</span>
+                    <span className="trust-item">OpenCV</span>
                 </div>
             </section>
 
@@ -193,7 +218,7 @@ function HomePage({ onSettingsOpen }) {
                     <div className="footer-links-grid">
                         <div className="footer-column">
                             <h4>Tools</h4>
-                            <button onClick={() => navigate('/tracker')}>Tracker</button>
+                            <button onClick={() => navigate('/tracker')}>Translator</button>
                             <button onClick={() => navigate('/transcriber')}>Transcriber</button>
                             <button onClick={() => navigate('/enhanced')}>Enhanced Mode</button>
                         </div>
