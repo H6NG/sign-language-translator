@@ -198,7 +198,7 @@ function HomePage({ onSettingsOpen }) {
                     <div className="hiw-context">
                         <h2 className="hiw-title">How it works</h2>
                         <p className="hiw-subtitle">
-                            Your signs, translated by AI and delivered in real time — powered by computer vision, ready in your browser.
+                            From gestures to text, in the blink of an eye.
                         </p>
                         <button className="hiw-cta" onClick={() => navigate('/tracker')}>
                             Start Translating
@@ -300,10 +300,10 @@ function HomePage({ onSettingsOpen }) {
                         </div>
                     </div>
                 </div>
-            </section>
+            </section >
 
             {/* Trust / Built With Bar */}
-            <section className="trust-bar">
+            < section className="trust-bar" >
                 <span className="trust-label">Powered by</span>
                 <div className="trust-items">
                     <span className="trust-item">Python</span>
@@ -316,10 +316,10 @@ function HomePage({ onSettingsOpen }) {
                     <span className="trust-divider">·</span>
                     <span className="trust-item">OpenCV</span>
                 </div>
-            </section>
+            </section >
 
             {/* FAQ Section */}
-            <section className="faq-section">
+            < section className="faq-section" >
                 <h2 className="faq-title">Frequently Asked Questions</h2>
                 <p className="faq-subtitle">Have a question? We have answers.</p>
                 <div className="faq-list">
@@ -354,10 +354,10 @@ function HomePage({ onSettingsOpen }) {
                         </div>
                     ))}
                 </div>
-            </section>
+            </section >
 
             {/* Footer */}
-            <footer className="home-footer">
+            < footer className="home-footer" >
                 <div className="footer-content">
                     <div className="footer-brand">
                         <span className="footer-logo">SignMate</span>
@@ -394,8 +394,8 @@ function HomePage({ onSettingsOpen }) {
                 <div className="footer-bottom">
                     <p>&copy; {new Date().getFullYear()} SignMate. All rights reserved.</p>
                 </div>
-            </footer>
-        </div>
+            </footer >
+        </div >
     )
 }
 

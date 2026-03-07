@@ -19,9 +19,15 @@ from video_transcriber import transcribe_video_file, letter_sequence_to_words  #
 import tempfile
 import os as os_module
 
+from gestures.inference import GestureInference  # type: ignore
+
 # Enhanced mode (LSTM + HELLO)
 _enhanced_processor = None
 _face_landmarker = None
+
+# Gesture mode (BiLSTM Dynamic)
+_gesture_engine = None
+_gesture_face_landmarker = None
 
 # LSTM full-word model for main tracker (hybrid prediction)
 _lstm_model = None
@@ -48,7 +54,7 @@ current_settings = {
     'min_tracking_confidence': 0.4,
     'min_hand_detection_confidence': 0.4,
     'min_hand_presence_confidence': 0.6,
-    'prediction_mode': 'both',  # 'letters', 'numbers', or 'both'
+    'prediction_mode': 'both',  # 'letters', 'numbers', 'both', or 'gestures'
     'min_stable_duration': 0.25, # seconds
     'transcription_confidence': 0.75,
 }
@@ -77,6 +83,7 @@ latest_result = None
 current_landmarks = []  # For API access
 current_prediction = {"letter": "", "confidence": 0.0}  # Store latest prediction
 current_word_prediction = {"word": "", "confidence": 0.0}  # LSTM full-word
+current_gesture_prediction = {"sign": "", "confidence": 0.0, "top3": []}  # Dynamic gesture
 lock = threading.Lock()
 landmarker = None
 settings_changed = False
@@ -294,9 +301,42 @@ def _load_lstm_model():
         print(f"  ⚠️ LSTM model not loaded: {e}")
 
 
+def _init_gesture_engine():
+    """Load the dynamic gesture recognition engine and face landmarker."""
+    global _gesture_engine, _gesture_face_landmarker
+    
+    script_dir = os_module.path.dirname(os_module.path.abspath(__file__))
+    model_path = os_module.path.join(script_dir, 'gestures', 'gesture_lstm.pth')
+    
+    if os_module.path.exists(model_path):
+        print("🧠 Loading dynamic gesture model...")
+        _gesture_engine = GestureInference(
+            model_path=model_path,
+            confidence_threshold=0.75,
+            cooldown_seconds=1.0,
+            predict_interval=3
+        )
+        if _gesture_engine.is_loaded:
+            print("  ✅ Dynamic gesture model loaded")
+        else:
+            _gesture_engine = None
+    
+    face_path = os_module.path.join(script_dir, 'face_landmarker.task')
+    if os_module.path.exists(face_path):
+        FaceLandmarker = mp.tasks.vision.FaceLandmarker
+        FaceLandmarkerOptions = mp.tasks.vision.FaceLandmarkerOptions
+        opts = FaceLandmarkerOptions(
+            base_options=BaseOptions(model_asset_path=face_path),
+            num_faces=1
+        )
+        _gesture_face_landmarker = FaceLandmarker.create_from_options(opts)
+        print("  ✅ Face landmarker loaded for gestures")
+
+
 # Load AI model at startup
 load_ml_model()
 _load_lstm_model()
+_init_gesture_engine()
 
 # Create initial landmarker
 landmarker = create_landmarker()
@@ -345,6 +385,16 @@ def generate_frames():
         left_features = get_empty_hand()
         right_features = get_empty_hand()
         
+        # Face landmarks for gesture model
+        face_lms = None
+        if current_settings.get('prediction_mode') == 'gestures' and _gesture_face_landmarker:
+            try:
+                face_result = _gesture_face_landmarker.detect(mp_image)
+                if face_result and face_result.face_landmarks:
+                    face_lms = face_result.face_landmarks[0]
+            except Exception:
+                pass
+
         if latest_result and latest_result.hand_landmarks:
             # Use detection order (idx 0 = left, idx 1 = right) to match training data collection
             # This matches data_collector.py which assigned first detected hand to left_features
@@ -365,8 +415,20 @@ def generate_frames():
                 frame_landmarks.extend([0.0] * 63)
             
             # Make prediction if model is loaded
-            if model_loaded:
-                predict_gesture(left_features, right_features)
+            if current_settings.get('prediction_mode') == 'gestures':
+                if _gesture_engine and _gesture_engine.is_loaded:
+                    top3_raw = _gesture_engine.get_top_predictions(latest_result, face_lms, top_k=3)
+                    pred = _gesture_engine.process_frame(latest_result, face_lms)
+                    
+                    with lock:
+                        # Always update top3 so sidebar feels alive
+                        current_gesture_prediction["top3"] = [{"letter": p[0], "confidence": p[1]} for p in top3_raw]
+                        if pred:
+                            current_gesture_prediction["sign"] = pred['sign']
+                            current_gesture_prediction["confidence"] = pred['confidence']
+            else:
+                if model_loaded:
+                    predict_gesture(left_features, right_features)
             
             # Draw on frame
             for hand_landmarks in latest_result.hand_landmarks:
@@ -396,6 +458,10 @@ def generate_frames():
             with lock:
                 current_prediction = {"letter": "", "confidence": 0.0}
                 current_word_prediction = {"word": "", "confidence": 0.0}
+                current_gesture_prediction["sign"] = ""
+                current_gesture_prediction["confidence"] = 0.0
+                if _gesture_engine:
+                    _gesture_engine.reset()
         
         # Update buffer and current landmarks
         if len(frame_landmarks) == 126:
@@ -526,6 +592,9 @@ def prediction():
             "top3": current_prediction.get("top3", []),
             "word": current_word_prediction.get("word", ""),
             "word_confidence": current_word_prediction.get("confidence", 0.0),
+            "gesture": current_gesture_prediction.get("sign", ""),
+            "gesture_confidence": current_gesture_prediction.get("confidence", 0.0),
+            "gesture_top3": current_gesture_prediction.get("top3", []),
             "hand_position": hand_position,
             "model_loaded": model_loaded,
             "mode": current_settings.get('prediction_mode', 'both')
@@ -774,7 +843,7 @@ def update_settings():
         
         if 'prediction_mode' in data:
             mode = data['prediction_mode']
-            if mode in ['letters', 'numbers', 'both']:
+            if mode in ['letters', 'numbers', 'both', 'gestures']:
                 current_settings['prediction_mode'] = mode
 
         if 'min_stable_duration' in data:

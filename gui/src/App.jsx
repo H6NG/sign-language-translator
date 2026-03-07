@@ -170,7 +170,50 @@ function TrackerPage({ theme, onSettingsOpen }) {
     }, getAutoAddDelay())
 
     // Don't clear timer in cleanup - we manage it manually
-  }, [prediction.letter, prediction.confidence])
+  }, [prediction.letter, prediction.confidence, getAutoAddThreshold, getAutoAddDelay, playAddBeep])
+
+  // Auto-add word for gesture predictions
+  useEffect(() => {
+    const currentGesture = prediction.gesture
+    const confidence = prediction.gesture_confidence
+    const autoThreshold = getAutoAddThreshold()
+
+    if (!currentGesture || confidence < autoThreshold) {
+      return
+    }
+
+    // Use the same stable timer mechanism, but for gesture words
+    if (currentGesture === stableLetterRef.current) {
+      return
+    }
+
+    stableLetterRef.current = currentGesture
+
+    if (stableTimerRef.current) {
+      clearTimeout(stableTimerRef.current)
+    }
+
+    const top3Snap = prediction.gesture_top3 || []
+    stableTimerRef.current = setTimeout(() => {
+      const wordToAdd = String(currentGesture)
+      playAddBeep()
+      // Add a space before words if there's existing text but no trailing space
+      setSentence(prev => {
+        const prefix = (prev.length > 0 && !prev.endsWith(' ')) ? prev + ' ' : prev
+        return prefix + wordToAdd.toUpperCase() + ' '
+      })
+      setLastAddedLetter(wordToAdd.toUpperCase())
+      setPredictionHistory(prev => [...prev.slice(-99), {
+        letter: wordToAdd.toUpperCase(),
+        confidence: confidence,
+        timestamp: Date.now(),
+        top3: top3Snap
+      }])
+      stableLetterRef.current = ''
+      stableTimerRef.current = null
+    }, getAutoAddDelay())
+
+  }, [prediction.gesture, prediction.gesture_confidence, getAutoAddThreshold, getAutoAddDelay, playAddBeep])
 
   // Word autocomplete - lazy-load dictionary and compute suggestions
   useEffect(() => {
@@ -431,6 +474,26 @@ function TrackerPage({ theme, onSettingsOpen }) {
   // Add letter to sentence helper (uses configurable manual-add threshold)
   const addLetterToSentence = useCallback(() => {
     const manualThreshold = getManualAddThreshold()
+
+    // Check if we have a gesture prediction first
+    if (prediction.mode === 'gestures' && prediction.gesture && prediction.gesture_confidence > manualThreshold) {
+      playAddBeep()
+      const wordToAdd = String(prediction.gesture).toUpperCase()
+      setSentence(prev => {
+        const prefix = (prev.length > 0 && !prev.endsWith(' ')) ? prev + ' ' : prev
+        return prefix + wordToAdd + ' '
+      })
+      setLastAddedLetter(wordToAdd)
+      setPredictionHistory(prev => [...prev.slice(-99), {
+        letter: wordToAdd,
+        confidence: prediction.gesture_confidence,
+        timestamp: Date.now(),
+        top3: prediction.gesture_top3 || []
+      }])
+      return
+    }
+
+    // Otherwise fallback to letter prediction
     if (prediction.letter && prediction.confidence > manualThreshold) {
       playAddBeep()
       const letterToAdd = String(prediction.letter)
@@ -446,7 +509,7 @@ function TrackerPage({ theme, onSettingsOpen }) {
         top3: prediction.top3 || []
       }])
     }
-  }, [prediction.letter, prediction.confidence, playAddBeep])
+  }, [prediction, getManualAddThreshold, playAddBeep])
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -581,13 +644,20 @@ function TrackerPage({ theme, onSettingsOpen }) {
             </button>
 
             {/* AR Prediction Overlay - Moves with hand, positioned to side */}
-            {arOverlayEnabled && prediction.letter && prediction.confidence > 0.3 && (() => {
+            {arOverlayEnabled && (() => {
+              const mode = prediction.mode;
+              const isGesture = mode === 'gestures';
+              const predText = isGesture ? prediction.gesture : prediction.letter;
+              const predConf = isGesture ? prediction.gesture_confidence : prediction.confidence;
+
+              if (!predText || predConf <= 0.3) return null;
+
               const hp = prediction.hand_position
               if (!hp) return (
                 <div className="ar-prediction-overlay">
-                  <div className="ar-letter">{prediction.letter}</div>
+                  <div className={`ar-letter ${isGesture ? 'gesture' : ''}`}>{isGesture ? predText.toUpperCase() : predText}</div>
                   <div className="ar-confidence">
-                    {(prediction.confidence * 100).toFixed(0)}%
+                    {(predConf * 100).toFixed(0)}%
                   </div>
                 </div>
               )
@@ -608,9 +678,9 @@ function TrackerPage({ theme, onSettingsOpen }) {
                     right: 'auto'
                   }}
                 >
-                  <div className="ar-letter">{prediction.letter}</div>
+                  <div className={`ar-letter ${isGesture ? 'gesture' : ''}`}>{isGesture ? predText.toUpperCase() : predText}</div>
                   <div className="ar-confidence">
-                    {(prediction.confidence * 100).toFixed(0)}%
+                    {(predConf * 100).toFixed(0)}%
                   </div>
                 </div>
               )
@@ -644,29 +714,39 @@ function TrackerPage({ theme, onSettingsOpen }) {
             </div>
 
             <div className="prediction-display">
-              {prediction.top3 && prediction.top3.length > 0 ? (
-                <div className="top3-predictions">
-                  {prediction.top3.map((pred, index) => (
-                    <div key={index} className={`top3-item ${index === 0 ? 'primary' : ''}`}>
-                      <div className="top3-rank">#{index + 1}</div>
-                      <div className="top3-letter">{pred.letter}</div>
-                      <div className="top3-bar-container">
-                        <div
-                          className="top3-bar-fill"
-                          style={{ width: `${pred.confidence * 100}%` }}
-                        ></div>
-                      </div>
-                      <div className="top3-confidence">
-                        {(pred.confidence * 100).toFixed(0)}%
-                      </div>
+              {(() => {
+                const isGesture = prediction.mode === 'gestures';
+                const mainText = isGesture ? prediction.gesture : prediction.letter;
+                const top3 = isGesture ? prediction.gesture_top3 : prediction.top3;
+
+                if (top3 && top3.length > 0) {
+                  return (
+                    <div className="top3-predictions">
+                      {top3.map((pred, index) => (
+                        <div key={`${pred.letter}-${index}`} className={`top3-item ${index === 0 ? 'primary' : ''}`}>
+                          <div className="top3-rank">#{index + 1}</div>
+                          <div className={`top3-letter ${isGesture ? 'gesture-text' : ''}`}>{isGesture ? String(pred.letter).toUpperCase() : pred.letter}</div>
+                          <div className="top3-bar-container">
+                            <div
+                              className="top3-bar-fill"
+                              style={{ width: `${pred.confidence * 100}%` }}
+                            ></div>
+                          </div>
+                          <div className="top3-confidence">
+                            {(pred.confidence * 100).toFixed(0)}%
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="no-prediction">
-                  {status.has_hands ? 'Analyzing...' : 'Show a sign'}
-                </div>
-              )}
+                  );
+                } else {
+                  return (
+                    <div className="no-prediction">
+                      {status.has_hands ? 'Analyzing...' : 'Show a sign'}
+                    </div>
+                  );
+                }
+              })()}
             </div>
 
             {/* Word prediction (LSTM) */}
@@ -690,14 +770,14 @@ function TrackerPage({ theme, onSettingsOpen }) {
             {/* Mode Selector */}
             <div className="mode-selector">
               <span className="mode-label">Mode:</span>
-              <div className="mode-buttons">
-                {['letters', 'numbers', 'both'].map(mode => (
+              <div className="mode-buttons-grid">
+                {['letters', 'numbers', 'both', 'gestures'].map(mode => (
                   <button
                     key={mode}
                     className={`mode-btn ${prediction.mode === mode ? 'active' : ''}`}
                     onClick={() => handleModeChange(mode)}
                   >
-                    {mode === 'letters' ? 'A-Z' : mode === 'numbers' ? '0-9' : 'All'}
+                    {mode === 'letters' ? 'A-Z' : mode === 'numbers' ? '0-9' : mode === 'gestures' ? '👋 Gestures' : 'All'}
                   </button>
                 ))}
               </div>
@@ -736,9 +816,15 @@ function TrackerPage({ theme, onSettingsOpen }) {
               <button
                 className="btn btn-small btn-primary"
                 onClick={addLetterToSentence}
-                disabled={!prediction.letter || prediction.confidence <= getManualAddThreshold()}
+                disabled={(() => {
+                  const mThresh = getManualAddThreshold();
+                  if (prediction.mode === 'gestures') {
+                    return !prediction.gesture || prediction.gesture_confidence <= mThresh;
+                  }
+                  return !prediction.letter || prediction.confidence <= mThresh;
+                })()}
               >
-                + Add Letter
+                + Add {prediction.mode === 'gestures' ? 'Word' : 'Letter'}
               </button>
               <button
                 className="btn btn-small"

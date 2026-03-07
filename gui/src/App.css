@@ -525,9 +525,9 @@
 }
 
 .hiw-subtitle {
-  font-size: 15px;
+  font-size: 18px;
   line-height: 1.7;
-  color: #64748b;
+  color: #1e293b;
   margin-bottom: 32px;
   max-width: 300px;
 }
@@ -1983,6 +1983,13 @@
   color: var(--accent-primary);
 }
 
+.top3-letter.gesture-text {
+  width: auto;
+  min-width: 60px;
+  text-align: left;
+  font-size: 11px;
+}
+
 .top3-item:not(.primary) .top3-letter {
   font-size: 20px;
   color: var(--text-primary);
@@ -2064,6 +2071,12 @@
 
 .mode-buttons {
   display: flex;
+  gap: 6px;
+}
+
+.mode-buttons-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 6px;
 }
 
@@ -2212,6 +2225,12 @@
   line-height: 1;
   color: var(--accent-primary);
   animation: arLetterPop 0.15s ease-out;
+}
+
+.ar-letter.gesture {
+  font-size: 24px;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
 }
 
 @keyframes arLetterPop {
