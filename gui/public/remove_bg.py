@@ -1,4 +1,4 @@
-from PIL import Image
+from PIL import Image# type: ignore
 import os
 
 def remove_background(input_path, output_path, tolerance=50):
