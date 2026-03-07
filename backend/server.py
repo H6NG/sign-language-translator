@@ -44,9 +44,9 @@ gesture_buffer = deque(maxlen=BUFFER_SIZE)
 capture_count = 0
 is_running = True
 
-model_path = 'hand_landmarker.task'
-MODEL_FILE = 'gesture_model_pytorch.pth'
-SCALER_FILE = 'gesture_scaler.pkl'
+model_path = os_module.path.join(os_module.path.dirname(__file__), 'hand_landmarker.task')
+MODEL_FILE = os_module.path.join(os_module.path.dirname(__file__), 'gesture_model_pytorch.pth')
+SCALER_FILE = os_module.path.join(os_module.path.dirname(__file__), 'gesture_scaler.pkl')
 
 # Current settings (configurable via API)
 current_settings = {
@@ -261,7 +261,7 @@ def _init_enhanced():
         from enhanced import EnhancedProcessor  # type: ignore
         script_dir = os_module.path.dirname(os_module.path.abspath(__file__))
         face_path = os_module.path.join(script_dir, 'face_landmarker.task')
-        sign_path = os_module.path.join(script_dir, 'pytorch', 'sign_model.pth')
+        sign_path = os_module.path.join(script_dir, '..', 'pytorch', 'sign_model.pth')
         _enhanced_processor = EnhancedProcessor(face_path, sign_path)
         # Face landmarker
         if os_module.path.exists(face_path):
@@ -288,9 +288,9 @@ def _load_lstm_model():
         return
     try:
         import sys
-        sys.path.insert(0, os_module.path.join(os_module.path.dirname(__file__), 'pytorch'))
+        sys.path.insert(0, os_module.path.join(os_module.path.dirname(__file__), '..', 'pytorch'))
         from model import SignModel  # type: ignore
-        sign_path = os_module.path.join(os_module.path.dirname(__file__), 'pytorch', 'sign_model.pth')
+        sign_path = os_module.path.join(os_module.path.dirname(__file__), '..', 'pytorch', 'sign_model.pth')
         if os_module.path.exists(sign_path):
             _lstm_model = SignModel(len(_lstm_signs))
             _lstm_model.load_state_dict(torch.load(sign_path, map_location='cpu', weights_only=False))

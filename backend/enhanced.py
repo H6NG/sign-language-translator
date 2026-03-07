@@ -10,7 +10,7 @@ import torch
 from collections import deque
 
 # Add pytorch to path for SignModel import
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'pytorch'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'pytorch'))
 from model import SignModel  # noqa: E402
 
 SIGNS = ["hello", "me", "thankyou", "no", "yes"]

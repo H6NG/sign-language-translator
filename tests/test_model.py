@@ -14,9 +14,11 @@ import numpy as np
 import joblib # type: ignore
 
 # ================= CONFIGURATION =================
-model_path = 'hand_landmarker.task'
-MODEL_FILE = 'gesture_model_pytorch.pth'
-SCALER_FILE = 'gesture_scaler.pkl'
+import os
+base_dir = os.path.join(os.path.dirname(__file__), '..', 'backend')
+model_path = os.path.join(base_dir, 'hand_landmarker.task')
+MODEL_FILE = os.path.join(base_dir, 'gesture_model_pytorch.pth')
+SCALER_FILE = os.path.join(base_dir, 'gesture_scaler.pkl')
 
 # MediaPipe setup
 BaseOptions = mp.tasks.BaseOptions

@@ -1,10 +1,10 @@
-# process_asl_dataset.py
+# process_dataset.py
 # ====================
-# PURPOSE: Download and process ASL Alphabet Dataset (by debashishsau) through MediaPipe
+# PURPOSE: Process ASL image dataset through MediaPipe to extract landmarks
 # Creates landmark_data.csv for training
 #
 # USAGE:
-#   python process_asl_dataset.py
+#   python process_dataset.py
 
 import cv2 # type: ignore
 import mediapipe as mp
@@ -13,16 +13,18 @@ import os
 from pathlib import Path
 
 # ================= CONFIGURATION =================
-# Dataset will be auto-downloaded via kagglehub
-KAGGLE_DATASET = "debashishsau/aslamerican-sign-language-aplhabet-dataset"
+DATASET_PATH = Path.home() / ".cache/kagglehub/datasets/grassknoted/asl-alphabet/versions/1/asl_alphabet_train/asl_alphabet_train"
 OUTPUT_FILE = 'landmark_data.csv'
-MODEL_PATH = 'hand_landmarker.task'
+import os
+MODEL_PATH = os.path.join(os.path.dirname(__file__), '..', 'backend', 'hand_landmarker.task')
 
-# Which letters to process (A-Z only, excluding SPACE, DELETE, NOTHING)
-LETTERS_TO_PROCESS = [chr(i) for i in range(ord('A'), ord('Z') + 1)]
+# Which letters to process
+# LETTERS_TO_PROCESS = ['A', 'B', 'C', 'D', 'E']  # Start with 5
+LETTERS_TO_PROCESS = None  # Process ALL 26 letters
 
-# How many images per letter (None for all ~4000)
-MAX_IMAGES_PER_LETTER = 20000
+# How many images per letter
+MAX_IMAGES_PER_LETTER = 500
+# MAX_IMAGES_PER_LETTER = None  # Uncomment for all
 
 NUM_LANDMARKS = 21
 NUM_COORDS = 3
@@ -32,60 +34,6 @@ BaseOptions = mp.tasks.BaseOptions
 HandLandmarker = mp.tasks.vision.HandLandmarker
 HandLandmarkerOptions = mp.tasks.vision.HandLandmarkerOptions
 VisionRunningMode = mp.tasks.vision.RunningMode
-
-
-def download_dataset():
-    """Download dataset using kagglehub"""
-    try:
-        import kagglehub # type: ignore
-        print(f"Downloading dataset: {KAGGLE_DATASET}")
-        path = kagglehub.dataset_download(KAGGLE_DATASET)
-        print(f"Dataset downloaded to: {path}")
-        return Path(path)
-    except ImportError:
-        print("ERROR: kagglehub not installed. Install with: pip install kagglehub")
-        return None
-    except Exception as e:
-        print(f"ERROR downloading dataset: {e}")
-        return None
-
-
-def find_training_folder(base_path):
-    """Find the training data folder in the downloaded dataset"""
-    base = Path(base_path)
-    
-    # Try common folder names
-    possible_names = [
-        "Training Data",
-        "training_data", 
-        "train",
-        "asl_alphabet_train",
-        "Train"
-    ]
-    
-    for name in possible_names:
-        folder = base / name
-        if folder.exists():
-            return folder
-    
-    # Check if there's a nested structure
-    for child in base.iterdir():
-        if child.is_dir():
-            for name in possible_names:
-                folder = child / name
-                if folder.exists():
-                    return folder
-            # Check if the child itself contains letter folders
-            letter_folders = [d for d in child.iterdir() if d.is_dir() and len(d.name) == 1 and d.name.isalpha()]
-            if len(letter_folders) >= 20:
-                return child
-    
-    # Last resort: check if base itself has letter folders
-    letter_folders = [d for d in base.iterdir() if d.is_dir() and len(d.name) == 1 and d.name.isalpha()]
-    if len(letter_folders) >= 20:
-        return base
-    
-    return None
 
 
 def generate_csv_header():
@@ -110,40 +58,25 @@ def get_empty_hand():
 
 def main():
     print("=" * 60)
-    print("ASL ALPHABET DATASET PROCESSOR")
-    print("Dataset: debashishsau/aslamerican-sign-language-aplhabet-dataset")
+    print("ASL DATASET PROCESSOR (MediaPipe Tasks API)")
     print("=" * 60)
+    print(f"Dataset: {DATASET_PATH}")
+    print(f"Output: {OUTPUT_FILE}")
     
-    # Download dataset
-    dataset_base = download_dataset()
-    if dataset_base is None:
+    if not DATASET_PATH.exists():
+        print(f"\nERROR: Dataset not found at {DATASET_PATH}")
         return
-    
-    # Find training folder
-    dataset_path = find_training_folder(dataset_base)
-    if dataset_path is None:
-        print(f"\nERROR: Could not find training data folder in {dataset_base}")
-        print("Contents:", list(dataset_base.iterdir())[:10]) # type: ignore
-        return
-    
-    print(f"\nTraining data found at: {dataset_path}")
     
     if not os.path.exists(MODEL_PATH):
-        print(f"\nERROR: MediaPipe model not found: {MODEL_PATH}")
-        print("Make sure hand_landmarker.task is in the current directory")
+        print(f"\nERROR: Model not found: {MODEL_PATH}")
         return
     
-    # Find available letters
-    available_letters = sorted([
-        d.name for d in dataset_path.iterdir() 
-        if d.is_dir() and d.name in LETTERS_TO_PROCESS
-    ])
-    
-    print(f"Letters to process: {available_letters}")
+    letters = LETTERS_TO_PROCESS if LETTERS_TO_PROCESS else sorted([d.name for d in DATASET_PATH.iterdir() if d.is_dir() and len(d.name) == 1])
+    print(f"Letters: {letters}")
     print(f"Max per letter: {MAX_IMAGES_PER_LETTER or 'all'}")
     print("=" * 60)
     
-    # Setup MediaPipe
+    # Setup - IMAGE mode for static images
     options = HandLandmarkerOptions(
         base_options=BaseOptions(model_asset_path=MODEL_PATH),
         running_mode=VisionRunningMode.IMAGE,
@@ -160,19 +93,13 @@ def main():
             total_processed = 0
             total_success = 0
             
-            for letter in available_letters:
-                letter_path = dataset_path / letter
+            for letter in letters:
+                letter_path = DATASET_PATH / letter
                 if not letter_path.exists():
-                    print(f"  Skipping {letter} - folder not found")
+                    print(f"  Skipping {letter}")
                     continue
                 
-                # Find image files
-                image_files = (
-                    list(letter_path.glob("*.jpg")) + 
-                    list(letter_path.glob("*.jpeg")) + 
-                    list(letter_path.glob("*.png"))
-                )
-                
+                image_files = list(letter_path.glob("*.jpg")) + list(letter_path.glob("*.png"))
                 if MAX_IMAGES_PER_LETTER:
                     image_files = image_files[:MAX_IMAGES_PER_LETTER] # type: ignore
                 
@@ -191,11 +118,11 @@ def main():
                         if image is None:
                             continue
                         
-                        # Convert to RGB and create MP Image
+                        # Convert and create MP Image
                         image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
                         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=image_rgb)
                         
-                        # Detect hands
+                        # Detect
                         result = landmarker.detect(mp_image)
                         
                         if result.hand_landmarks:
@@ -212,7 +139,7 @@ def main():
                             row = left_features + right_features + [letter] # type: ignore
                             writer.writerow(row)
                             success_count += 1 # type: ignore
-                            total_success += 1
+                            total_success += 1 # type: ignore
                     except Exception as e:
                         pass  # Skip problematic images
                 
@@ -221,7 +148,7 @@ def main():
     print("\n" + "=" * 60)
     print("PROCESSING COMPLETE")
     print(f"  Processed: {total_processed}")
-    print(f"  Detected: {total_success} ({total_success/max(total_processed,1)*100:.1f}%)") # type: ignore
+    print(f"  Detected: {total_success} ({total_success/total_processed*100:.1f}%)") # type: ignore
     print(f"  Saved to: {OUTPUT_FILE}")
     print("=" * 60)
     print("\nNext: python train_pytorch.py")

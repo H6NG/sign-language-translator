@@ -12,7 +12,8 @@ from pathlib import Path
 # ================= CONFIGURATION =================
 MSASL_JSON_PATH = Path('c:/Users/aayus/Desktop/MS-ASL/MS-ASL/MSASL_train.json')
 OUTPUT_FILE = 'msasl_landmarks.csv'
-MODEL_PATH = 'hand_landmarker.task'
+import os
+MODEL_PATH = os.path.join(os.path.dirname(__file__), '..', 'backend', 'hand_landmarker.task')
 TEMP_VIDEO_DIR = 'temp_videos'
 
 # Target words to process (start small to verify)

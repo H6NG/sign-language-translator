@@ -15,14 +15,15 @@
 # 4. Repeat for each letter, collect 50+ samples per letter
 # 5. Press 'q' to quit and save
 
-import cv2
+import cv2# type: ignore 
 import mediapipe as mp
 import time
 import csv
 import os
 
 # ================= CONFIGURATION =================
-model_path = 'hand_landmarker.task'
+import os
+model_path = os.path.join(os.path.dirname(__file__), '..', 'backend', 'hand_landmarker.task')
 OUTPUT_FILE = 'landmark_data.csv'
 
 # MediaPipe setup (same as visionTester.py)

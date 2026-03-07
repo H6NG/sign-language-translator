@@ -12,7 +12,8 @@ from pathlib import Path
 # ================= CONFIGURATION =================
 NUMBERS_DATASET_PATH = Path.home() / ".cache/kagglehub/datasets/muhammadkhalid/sign-language-for-numbers/versions/1/Sign Language for Numbers"
 OUTPUT_FILE = 'landmark_data.csv'
-MODEL_PATH = 'hand_landmarker.task'
+import os
+MODEL_PATH = os.path.join(os.path.dirname(__file__), '..', 'backend', 'hand_landmarker.task')
 
 # Which numbers to process
 NUMBERS_TO_PROCESS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']

@@ -1,4 +1,4 @@
-import cv2
+import cv2# type: ignore 
 
 cap = cv2.VideoCapture(1)
 

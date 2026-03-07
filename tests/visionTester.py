@@ -1,21 +1,24 @@
-import cv2
+import cv2# type: ignore # type: ignore 
 import mediapipe as mp
-import numpy as np
+import numpy as np# type: ignore 
 import time
 import threading
-from mediapipe.tasks import python
+from mediapipe.tasks import python# type: ignore 
 from mediapipe.tasks.python import vision
-from detect import get_os
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'backend'))
+
+from detect import get_os# type: ignore 
 from dataparser import append_frame
 
 # buffer for csv parsing
 from collections import deque
-from dataparser import append_frame
 
 #pytorch
-import torch
+import torch# type: ignore 
 import torch.nn as nn
-import numpy as np
+import numpy as np# type: ignore 
 
 
 BUFFER_SIZE = 200
@@ -23,7 +26,8 @@ gesture_buffer = deque(maxlen=BUFFER_SIZE)
 
 
 # ================= CONFIG =================
-model_path = 'hand_landmarker.task'
+import os
+model_path = os.path.join(os.path.dirname(__file__), '..', 'backend', 'hand_landmarker.task')
 numberOfHands = 2
 
 BaseOptions = mp.tasks.BaseOptions
@@ -100,32 +104,32 @@ with HandLandmarker.create_from_options(options) as landmarker:
         # Always define it first
         current_frame_landmarks = []
 
-        if latest_result and latest_result.hand_landmarks:
+        if latest_result and latest_result.hand_landmarks:# type: ignore 
 
             current_frame_landmarks = []
             hands_found = {"Right": None, "Left": None}
 
-            for idx, hand_lms in enumerate(latest_result.hand_landmarks):
+            for idx, hand_lms in enumerate(latest_result.hand_landmarks):# type: ignore 
                 # Get the label (Right or Left)
-                label = latest_result.handedness[idx][0].category_name
+                label = latest_result.handedness[idx][0].category_name# type: ignore 
                 hands_found[label] = hand_lms
 
             # Now build the array in a FIXED order
             # If a hand is missing, we fill it with 0s so the array size is always 126
             for side in ["Right", "Left"]:
                 if hands_found[side]:
-                    for lm in hands_found[side]:
+                    for lm in hands_found[side]:# type: ignore 
                         current_frame_landmarks.extend([lm.x, lm.y, lm.z])
                 else:
                     # Fill with 63 zeros if the hand isn't in frame
                     current_frame_landmarks.extend([0.0] * 63)
 
-            for hand_landmarks in latest_result.hand_landmarks:
+            for hand_landmarks in latest_result.hand_landmarks:# type: ignore 
                 h, w, _ = frame.shape
 
                 # ---- 1. Draw skeleton ----
                 for c in HAND_CONNECTIONS:
-                    start = hand_landmarks[c[0]]
+                    start = hand_landmarks[c[0]]# type: ignore 
                     end = hand_landmarks[c[1]]
 
                     x1, y1 = int(start.x * w), int(start.y * h)
